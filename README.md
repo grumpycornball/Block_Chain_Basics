@@ -3,7 +3,7 @@ Practising blockchain basics
 
 This repository will contain code varying from basic blockchain model to advanced one.
 
-#Makefile added :
+# Makefile added :
 To build, use make command. For Help use 'make help'. Rest is obvious.
 
 # basic_bitcoin.py : 
