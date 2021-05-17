@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-
+#include <openssl/sha.h> //for sha hash
 using namespace std;
 
 struct block{
@@ -17,10 +17,29 @@ string timestamp()
     return asctime( localtime(&ltime) ) ;
 }
 
+void sha256_string(char *string, char outputBuffer[65])     //function courtesy of https://stackoverflow.com/a/2458382/5340585 
+{
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, string, strlen(string));
+    SHA256_Final(hash, &sha256);
+    int i = 0;
+    for(i = 0; i < SHA256_DIGEST_LENGTH; i++)
+    {
+        sprintf(outputBuffer + (i * 2), "%02x", hash[i]);
+    }
+    outputBuffer[64] = 0;
+}
+
 // Function to create hash
 string create_hash(int proof, string previousHash){
 
-    string hash;                // Still pending
+    char hash[65];
+    char *input = new char[(to_string(proof)+previousHash).length() + 1];
+    strcpy(input, (to_string(proof)+previousHash).c_str());
+    sha256_string(input,hash);
+    
     return hash;
     
 }
@@ -47,8 +66,9 @@ void addBlock(struct block *chain[], int *i){
     struct block *temp = new block();
     temp->index=*(i)+1;
     temp->timestamp=timestamp();
-    temp->proof=mineBlock(chain[*(i)-1]->previousHash);
     temp->previousHash=create_hash(chain[*(i)-1]->proof,chain[*(i)-1]->previousHash);
+    temp->proof=mineBlock(temp->previousHash);
+    
     chain[*(i)]=temp;
     *(i)=*(i)+1;
 
@@ -75,7 +95,7 @@ void printChain(struct block *chain[], int i){
 // Function to verify chain
 bool check_chain(struct block *chain[], int i){
 
-    for (int j = i-1; j>0; j++)
+    for (int j = i-1; j>0; j--)
     {
         if(create_hash(chain[j-1]->proof,chain[j-1]->previousHash) == chain[j]->previousHash ){
                 // All good
@@ -104,7 +124,6 @@ int main(){
 
     struct block *chain[10]; // Can change size if you want
     int i=0;
-
     // Lets create genesis block
     struct block *genesis = new block();
     genesis->index=i+1;
